@@ -1,0 +1,131 @@
+Create a Dockerfile in your Django project directory.
+# Use official Python image
+FROM python:3.13
+
+# Set working directory inside container
+WORKDIR /app
+
+# Copy project files into the container
+COPY . .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Collect static files (if applicable)
+RUN python manage.py collectstatic --noinput
+
+# Expose the port Django will run on
+EXPOSE 8000
+
+# Run Django application
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+
+
+Step 2: Create Dockerfile for PostgreSQL
+Create another Dockerfile in a new postgres/ directory.
+# Use official PostgreSQL image
+FROM postgres:16
+
+# Set environment variables
+ENV POSTGRES_USER=postgres_user
+ENV POSTGRES_PASSWORD=postgres_password
+ENV POSTGRES_DB=postgres_db
+
+# Expose PostgreSQL default port
+EXPOSE 5432
+
+
+
+Step 3: Create docker-compose.yml
+This file helps you run Django + PostgreSQL containers together.
+version: '3.8'
+
+services:
+  db:
+    build: ./postgres
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: postgres_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    container_name: django_container
+    depends_on:
+      - db
+    environment:
+      DATABASE_NAME: postgres_db
+      DATABASE_USER: postgres_user
+      DATABASE_PASSWORD: postgres_password
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  pgdata:
+
+
+
+Step 4: Update Django settings.py
+Modify the DATABASES configuration to connect with PostgreSQL in Docker.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DATABASE_NAME', 'postgres_db'),
+        'USER': os.environ.get('DATABASE_USER', 'postgres_user'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'postgres_password'),
+        'HOST': os.environ.get('DATABASE_HOST', 'db'),
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),
+    }
+}
+
+
+
+Step 5: Build and Run Containers
+1. Build images:
+docker-compose build
+
+
+2. Start containers:
+docker-compose up -d
+
+
+3. View running containers:
+docker ps
+
+
+4. Verify PostgreSQL connection:
+Enter the PostgreSQL container and check:
+docker exec -it postgres_container psql -U postgres_user -d postgres_db
+
+
+5. Run database migrations:
+docker exec -it django_container python manage.py migrate
+
+
+
+Step 6: Access Django App
+Once the containers are up, open Django in a browser:
+http://localhost:8001
+
+
+
+Step 7: Stop and Remove Containers (If Needed)
+Stop running containers:
+docker-compose down
+
+
+Remove all containers & images:
+docker system prune -a
