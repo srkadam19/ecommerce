@@ -129,3 +129,132 @@ docker-compose down
 
 Remove all containers & images:
 docker system prune -a
+
+
+
+
+
+
+
+
+==========================
+Step 1: Create a Google Cloud Free Tier Account
+1️⃣ Go to Google Cloud → Sign up here
+2️⃣ Sign in with Gmail → If you don’t have an account, create one.
+3️⃣ Click "Start Free" → Google offers $300 free credits for new users.
+4️⃣ Enter Billing Details → A credit card is required, but you won’t be charged unless you upgrade.
+5️⃣ Complete Setup → Your free-tier account is now ready!
+
+Step 2: Set Up a Virtual Machine (VM)
+1️⃣ Go to Google Cloud Console → Compute Engine
+2️⃣ Create a new VM instance:
+- Choose Ubuntu 22.04 as the OS.
+- Select e2-micro (Free Tier eligible).
+- Allow HTTP & HTTPS traffic. 3️⃣ Click "Create" → Your VM is now running.
+
+Step 3: Install Docker on the VM
+1️⃣ SSH into the VM:
+gcloud compute ssh <your-instance-name> --zone <your-zone>
+
+
+2️⃣ Update packages:
+sudo apt update && sudo apt upgrade -y
+
+
+3️⃣ Install Docker:
+sudo apt install docker.io -y
+
+
+4️⃣ Verify installation:
+docker --version
+
+
+
+Step 4: Clone Your Django Project from GitHub
+1️⃣ Install Git:
+sudo apt install git -y
+
+
+2️⃣ Clone your repository:
+git clone https://github.com/your-username/your-repo.git
+
+
+3️⃣ Navigate to the project folder:
+cd your-repo
+
+
+
+Step 5: Build and Run Your Docker Image
+1️⃣ Build the Docker image:
+docker build -t django-app .
+
+
+2️⃣ Run the container:
+docker run -d -p 8000:8000 django-app
+
+
+3️⃣ Check running containers:
+docker ps
+
+
+
+Step 6: Set Up PostgreSQL in Docker
+1️⃣ Pull PostgreSQL image:
+docker pull postgres
+
+
+2️⃣ Run PostgreSQL container:
+docker run -d --name postgres-db -e POSTGRES_USER=youruser -e POSTGRES_PASSWORD=yourpassword -e POSTGRES_DB=yourdb -p 5432:5432 postgres
+
+
+3️⃣ Update Django settings.py:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'yourdb',
+        'USER': 'youruser',
+        'PASSWORD': 'yourpassword',
+        'HOST': 'postgres-db',
+        'PORT': '5432',
+    }
+}
+
+
+
+Step 7: Expose Your Django App
+1️⃣ Allow traffic on port 8000:
+sudo ufw allow 8000
+
+
+2️⃣ Access your app:
+http://<your-vm-external-ip>:8000
+
+
+
+Step 8: Automate Deployment with Docker Compose
+1️⃣ Create docker-compose.yml:
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: youruser
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: yourdb
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+
+2️⃣ Run everything:
+docker-compose up -d
