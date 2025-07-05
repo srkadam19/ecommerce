@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    build: ./postgres
+    image: postgres:16
     container_name: postgres_container
     environment:
       POSTGRES_USER: postgres
@@ -15,6 +15,7 @@ services:
 
   web:
     build: .
+    image: srkadam/dj-tutorial-web:latest
     container_name: django_container
     depends_on:
       - db
