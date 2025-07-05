@@ -1,0 +1,17 @@
+# render.yaml
+services:
+  - type: web
+    name: dj-tutorial-web
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dj-tutorial-db
+          property: connectionString
+databases:
+  - name: dj-tutorial-db
+    engine: POSTGRESQL
+    plan: free
