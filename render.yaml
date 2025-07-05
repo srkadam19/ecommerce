@@ -11,7 +11,7 @@ services:
         fromDatabase:
           name: dj-tutorial-db
           property: connectionString
+
 databases:
   - name: dj-tutorial-db
-    engine: POSTGRESQL
     plan: free
